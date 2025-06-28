@@ -14,7 +14,6 @@
         android:background="@drawable/circle_green"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_margin="80dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
@@ -30,26 +29,26 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:text="Active Life"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/iconContainer"
-        app:layout_constraintTop_margin="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/iconContainer" />
 
     <TextView
         android:id="@+id/subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="Acompanhe sua jornada fitness"
         android:textColor="#BBBBBB"
         android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintTop_margin="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/title" />
 
     <Button
         android:id="@+id/btnGoogle"
@@ -57,36 +56,37 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:backgroundTint="#DDDDDD"
-        android:textColor="#000000"
         android:text="Continuar com o Google"
-        app:layout_constraintTop_toBottomOf="@id/subtitle"
+        android:textColor="#000000"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/subtitle" />
+
     <TextView
         android:id="@+id/signUp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:text="Não tem uma conta? Cadastre-se"
         android:textColor="#27a348"
         android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/btnGoogle"
-        app:layout_constraintTop_margin="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/btnGoogle" />
 
     <TextView
         android:id="@+id/terms"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
         android:text="Ao continuar, você concorda com nossos Termos de Serviço e Política de Privacidade"
+        android:textAlignment="center"
         android:textColor="#888888"
         android:textSize="12sp"
-        android:gravity="center"
-        android:textAlignment="center"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="16dp"
-        android:paddingHorizontal="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
