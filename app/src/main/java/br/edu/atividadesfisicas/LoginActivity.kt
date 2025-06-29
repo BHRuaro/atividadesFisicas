@@ -1,5 +1,6 @@
-package br.edu.atividadesfisicas
+ package br.edu.atividadesfisicas
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -45,14 +46,25 @@ class LoginActivity : AppCompatActivity() {
             "449772724679-subi61dcu9evv89qoi3pvn1sp5r23bqa.apps.googleusercontent.com"
     }
 
+    private fun redirectToMain() {
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_login)
 
         auth = FirebaseAuth.getInstance()
         credentialManager = CredentialManager.create(this)
         firestore = Firebase.firestore
+
+        auth.currentUser?.let {
+            redirectToMain()
+            return
+        }
 
         btnGoogle = findViewById(R.id.btnGoogle)
         btnGoogle.setOnClickListener {
@@ -82,7 +94,7 @@ class LoginActivity : AppCompatActivity() {
                         GoogleIdTokenCredential.createFrom(credential.data)
                     val idToken = googleIdTokenCredential.idToken
 
-                    firebaseAuthWithGooogle(idToken)
+                    firebaseAuthWithGoogle(idToken)
                 }
             } catch (e: GetCredentialException) {
                 Log.e(TAG, "Erro ao obter credencial: ${e.message}")
@@ -95,14 +107,18 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun firebaseAuthWithGooogle(idToken: String) {
+    private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 Log.d(TAG, "signInWithCredential:sucess")
 
                 val user = auth.currentUser
-                user?.let { criarPerfilUsuario(it) }
+                user?.let {
+                    criarPerfilUsuario(it)
+                    redirectToMain()
+
+                }
 
 
                 Toast.makeText(this@LoginActivity, "Login bem-sucedido", Toast.LENGTH_SHORT).show()
@@ -116,26 +132,33 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun LoginActivity.criarPerfilUsuario(user: FirebaseUser) {
-        var perfilUsuario = PerfilUsuario(
-            uid = user.uid,
-            nome = user.displayName ?: "",
-            email = user.email ?: "",
-            pontuacao = 0,
-            dataCadastro = Timestamp.now()
-        )
+        val docRef = firestore.collection("usuarios").document(user.uid)
 
-        firestore.collection("usuarios")
-            .document(user.uid)
-            .set(perfilUsuario)
-            .addOnSuccessListener {
-                Log.d(TAG, "Perfil de usuário criado com sucesso")
+        docRef.get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    Log.d(TAG, "Perfil de usuário já existe, não será recriado.")
+                } else {
+                    val perfilUsuario = PerfilUsuario(
+                        uid = user.uid,
+                        nome = user.displayName ?: "",
+                        email = user.email ?: "",
+                        pontuacao = 0,
+                        dataCadastro = Timestamp.now()
+                    )
+
+                    docRef.set(perfilUsuario)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "Perfil de usuário criado com sucesso")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.w(TAG, "Erro ao criar perfil de usuário", exception)
+                        }
+                }
             }
             .addOnFailureListener { exception ->
-                Log.w(
-                    TAG,
-                    "Erro ao criar perfil de usuário",
-                    exception
-                )
+                Log.w(TAG, "Erro ao verificar existência do perfil", exception)
             }
     }
+
 }
