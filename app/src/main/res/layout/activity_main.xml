@@ -112,7 +112,7 @@
         android:text="Ver Ranking Completo"
         android:textColor="#000000"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvRankingPreview" />
+        app:layout_constraintTop_toBottomOf="@id/tvRankingPreview"/>
 
     <Button
         android:id="@+id/btnMonitor"
