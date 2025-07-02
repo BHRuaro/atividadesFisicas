@@ -1,4 +1,3 @@
-
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -110,17 +109,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvWelcome" />
 
+    <Button
+        android:id="@+id/btnMonitor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:backgroundTint="#27a348"
+        android:text="Iniciar Monitoramento"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvPoints" />
+
     <TextView
         android:id="@+id/tvRankingTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         android:gravity="center"
-        android:text="🏅 Ranking Global"
+        android:text="🏅 Top 5 Ranking Global"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvPoints" />
+        app:layout_constraintTop_toBottomOf="@id/btnMonitor" />
 
     <TextView
         android:id="@+id/tvRankingPreview"
@@ -128,7 +139,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="1. Ana — 1520 pts\n2. Bruno — 1250 pts\n3. João — 1190 pts"
+        android:text="Carregando ranking..."
         android:textColor="#DDDDDD"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -145,18 +156,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvRankingPreview"/>
-
-    <Button
-        android:id="@+id/btnMonitor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:backgroundTint="#27a348"
-        android:text="Iniciar Monitoramento"
-        android:textColor="#000000"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnRanking" />
 
     <Button
         android:id="@+id/btnGrupos"
