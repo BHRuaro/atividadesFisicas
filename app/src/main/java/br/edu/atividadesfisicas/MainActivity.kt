@@ -5,24 +5,31 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.atividadesfisicas.grupo.GruposActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-private const val USUARIO = "Usuário"
-
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var btnMonitor : Button;
+    private lateinit var btnMonitor : Button
     private lateinit var btnRanking: Button
     private lateinit var tvWelcome: TextView
     private lateinit var tvPoints: TextView
+    private lateinit var tvRankingPreview: TextView
 
     private var pontuacaoListener: ListenerRegistration? = null
+    private var rankingListener: ListenerRegistration? = null
+
+    companion object {
+        private const val USUARIO = "Usuário"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +38,7 @@ class MainActivity : AppCompatActivity() {
         // Inicializar views
         tvWelcome = findViewById(R.id.tvWelcome)
         tvPoints = findViewById(R.id.tvPoints)
+        tvRankingPreview = findViewById(R.id.tvRankingPreview)
 
         btnRanking = findViewById(R.id.btnRanking)
         btnRanking.setOnClickListener {
@@ -42,16 +50,99 @@ class MainActivity : AppCompatActivity() {
             mostrarInfoPontuacao()
         }
 
-        btnMonitor = findViewById(R.id.btnMonitor);
+        val logoutContainer = findViewById<LinearLayout>(R.id.logoutContainer)
+        logoutContainer.setOnClickListener {
+            mostrarDialogoLogout()
+        }
+
+        btnMonitor = findViewById(R.id.btnMonitor)
 
         btnMonitor.setOnClickListener {
             val intent = Intent(this@MainActivity, MonitorActivity::class.java)
             startActivity(intent)
-        };
+        }
 
         // Carregar informações do usuário
         carregarInfoUsuario()
         setupPontuacaoListener()
+        setupRankingListener()
+    }
+
+    private fun setupRankingListener() {
+        val db = Firebase.firestore
+
+        rankingListener = db.collection("usuarios")
+            .orderBy("pontuacao", Query.Direction.DESCENDING)
+            .limit(5)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    runOnUiThread {
+                        tvRankingPreview.text = "Erro ao carregar ranking"
+                    }
+                    return@addSnapshotListener
+                }
+
+                val topUsuarios = snapshot?.documents?.mapNotNull { document ->
+                    document.toObject(PerfilUsuario::class.java)
+                } ?: emptyList()
+
+                runOnUiThread {
+                    atualizarRankingPreview(topUsuarios)
+                }
+            }
+    }
+
+    private fun atualizarRankingPreview(usuarios: List<PerfilUsuario>) {
+        if (usuarios.isEmpty()) {
+            tvRankingPreview.text = "Nenhum usuário encontrado"
+            return
+        }
+
+        val rankingText = StringBuilder()
+        usuarios.forEachIndexed { index, usuario ->
+            val posicao = index + 1
+            val primeiroNome = usuario.nome.split(" ").firstOrNull() ?: "Usuário"
+            val emoji = when (posicao) {
+                1 -> "🥇"
+                2 -> "🥈" 
+                3 -> "🥉"
+                else -> "🏆"
+            }
+            
+            rankingText.append("$posicao. $primeiroNome $emoji — ${usuario.pontuacao} pts")
+            if (index < usuarios.size - 1) {
+                rankingText.append("\n")
+            }
+        }
+
+        tvRankingPreview.text = rankingText.toString()
+    }
+
+    private fun mostrarDialogoLogout() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Sair")
+        builder.setMessage("Tem certeza que deseja sair da sua conta?")
+        builder.setPositiveButton("Sair") { _, _ ->
+            realizarLogout()
+        }
+        builder.setNegativeButton("Cancelar") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.show()
+    }
+
+    private fun realizarLogout() {
+        // Limpar o perfil do usuário armazenado
+        LoginActivity.currentUserProfile = null
+
+        // Fazer logout do Firebase Auth
+        FirebaseAuth.getInstance().signOut()
+
+        // Redirecionar para a tela de login
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun carregarInfoUsuario() {
@@ -133,17 +224,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun verRanking() {
-        val intent = Intent(this, RankingActivity ::class.java)
+        val intent = Intent(this, RankingActivity::class.java)
         startActivity(intent)
-
-        btnMonitor = findViewById(R.id.btnMonitor);
-
-        btnMonitor.setOnClickListener {
-            val intent = Intent(this@MainActivity, MonitorActivity::class.java)
-            startActivity(intent)
-        };
     }
-
 
     fun verGrupos(view: View) {
         val intent = Intent(this, GruposActivity::class.java)
@@ -151,7 +234,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mostrarInfoPontuacao() {
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
         builder.setTitle("Como os pontos funcionam?")
         builder.setMessage(
             "A cada passo dado, você ganha pontos automaticamente!\n\n" +
@@ -173,7 +256,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Limpar o listener para evitar vazamentos de memória
+        // Limpar os listeners para evitar vazamentos de memória
         pontuacaoListener?.remove()
+        rankingListener?.remove()
     }
 }
