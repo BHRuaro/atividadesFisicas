@@ -1,22 +1,28 @@
 package br.edu.atividadesfisicas
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import android.util.Log
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.Query
 
-class RankingActivity : AppCompatActivity(){
+class RankingActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
     private lateinit var adapter: RankingAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var layoutManager: LinearLayoutManager
+    private lateinit var etBuscar: EditText
+
+    private val listaUsuarios = mutableListOf<PerfilUsuario>()
+    private var listaOriginal = mutableListOf<PerfilUsuario>()
 
     private var lastVisible: DocumentSnapshot? = null
     private var isLoading = false
@@ -28,14 +34,26 @@ class RankingActivity : AppCompatActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        db = Firebase.firestore
         setContentView(R.layout.activity_ranking)
 
-         recyclerView = findViewById(R.id.recyclerViewUsers)
+        db = Firebase.firestore
+
+        recyclerView = findViewById(R.id.recyclerViewUsers)
+        etBuscar = findViewById(R.id.etBuscarRanking)
+
         layoutManager = LinearLayoutManager(this)
         recyclerView.layoutManager = layoutManager
-        setupScrollListener() // Configura o listener de rolagem
+
+        adapter = RankingAdapter(listaUsuarios)
+        recyclerView.adapter = adapter
+
+        setupScrollListener()
         fetchInitialUsers()
+
+        etBuscar.addTextChangedListener {
+            val texto = it.toString()
+            filtrarUsuarios(texto)
+        }
     }
 
     private fun fetchInitialUsers() {
@@ -45,70 +63,66 @@ class RankingActivity : AppCompatActivity(){
             .limit(INITIAL_LOAD_SIZE)
             .get()
             .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val userList = documents.toObjects(PerfilUsuario::class.java)
-
-                    lastVisible = documents.documents[documents.size() - 1]
-
-                    adapter = RankingAdapter(userList.toMutableList())
-                    recyclerView.adapter = adapter
-                }
+                val userList = documents.toObjects(PerfilUsuario::class.java)
+                listaUsuarios.clear()
+                listaUsuarios.addAll(userList)
+                listaOriginal = userList.toMutableList()
+                adapter.notifyDataSetChanged()
+                lastVisible = documents.documents.lastOrNull()
                 isLoading = false
             }
             .addOnFailureListener { e ->
-                Log.w("RankingActivity", "Erro na busca inicial", e)
+                Log.e("RankingActivity", "Erro na busca inicial", e)
                 isLoading = false
             }
     }
 
     private fun fetchMoreUsers() {
-        if (isLoading) return
-
-        if (lastVisible == null) {
-            Log.d("RankingActivity", "Chegou ao fim do ranking.")
-            return
-        }
+        if (isLoading || lastVisible == null) return
 
         isLoading = true
-        Log.d("RankingActivity", "Buscando mais usuários...")
-
-        val query = db.collection("usuarios")
+        db.collection("usuarios")
             .orderBy("pontuacao", Query.Direction.DESCENDING)
             .startAfter(lastVisible!!)
             .limit(PAGE_SIZE)
-
-        query.get()
+            .get()
             .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val newUsers = documents.toObjects(PerfilUsuario::class.java)
-                    adapter.addUsers(newUsers) // Adiciona os novos usuários ao adapter
-                    lastVisible = documents.documents[documents.size() - 1]
-                } else {
-                    lastVisible = null
-                    Log.d("RankingActivity", "Não há mais usuários para carregar.")
-                }
+                val novos = documents.toObjects(PerfilUsuario::class.java)
+                listaUsuarios.addAll(novos)
+                listaOriginal.addAll(novos)
+                adapter.notifyItemRangeInserted(listaUsuarios.size - novos.size, novos.size)
+                lastVisible = documents.documents.lastOrNull()
                 isLoading = false
             }
             .addOnFailureListener { e ->
-                Log.w("RankingActivity", "Erro ao buscar mais usuários", e)
+                Log.e("RankingActivity", "Erro ao buscar mais usuários", e)
                 isLoading = false
             }
+    }
+
+    private fun filtrarUsuarios(texto: String) {
+        val filtrados = if (texto.isBlank()) {
+            listaOriginal
+        } else {
+            listaOriginal.filter {
+                it.nome.contains(texto, ignoreCase = true) ||
+                        it.email.contains(texto, ignoreCase = true)
+            }
+        }
+
+        listaUsuarios.clear()
+        listaUsuarios.addAll(filtrados)
+        adapter.notifyDataSetChanged()
     }
 
     private fun setupScrollListener() {
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                if (dy > 0) {
-                    val visibleItemCount = layoutManager.childCount
-                    val totalItemCount = layoutManager.itemCount
-                    val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-
-                    // Condição para carregar mais:
-                    // Se os itens visíveis + a posição do primeiro item visível >= total de itens
-                    // e não estiver carregando no momento.
-                    if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount && firstVisibleItemPosition >= 0) {
+                if (dy > 0 && !isLoading) {
+                    val visibleCount = layoutManager.childCount
+                    val totalCount = layoutManager.itemCount
+                    val firstVisible = layoutManager.findFirstVisibleItemPosition()
+                    if ((visibleCount + firstVisible) >= totalCount) {
                         fetchMoreUsers()
                     }
                 }
