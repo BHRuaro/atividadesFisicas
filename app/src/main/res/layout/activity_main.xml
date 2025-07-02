@@ -6,12 +6,10 @@
     android:layout_height="match_parent"
     android:background="#121212">
 
-    <!-- Resto do conteúdo permanece igual -->
-    
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="76dp"
         android:background="#27a348"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -50,8 +48,9 @@
             android:layout_height="24dp"
             android:layout_gravity="end|center_vertical"
             android:layout_marginEnd="12dp"
-            android:contentDescription="Configurações"
-            android:src="@drawable/baseline_question_mark_24" />
+            android:contentDescription="Informações"
+            android:src="@drawable/baseline_question_mark_24"
+            android:onClick="mostrarInfoPontuacao"/>
 
     </androidx.appcompat.widget.Toolbar>
 
@@ -105,30 +104,31 @@
 
     <Button
         android:id="@+id/btnRanking"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:backgroundTint="#DDDDDD"
         android:text="Ver Ranking Completo"
         android:textColor="#000000"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvRankingPreview"/>
 
     <Button
         android:id="@+id/btnMonitor"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:backgroundTint="#27a348"
         android:text="Iniciar Monitoramento"
         android:textColor="#000000"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnRanking" />
 
     <Button
         android:id="@+id/btnGrupos"
-        android:layout_width="match_parent"
+        android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
@@ -136,6 +136,8 @@
         android:text="Ver Grupos"
         android:textColor="#000000"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:onClick="verGrupos"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
