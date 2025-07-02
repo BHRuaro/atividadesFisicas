@@ -109,6 +109,46 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvWelcome" />
 
+    <include
+        android:id="@+id/progressoNivel"
+        layout="@layout/visualizador_progresso_nivel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvPoints"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Botão para conquistas -->
+    <Button
+        android:id="@+id/btnConquistas"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#FFD700"
+        android:text="🏆 Conquistas"
+        android:textColor="#000000"
+        app:layout_constraintTop_toBottomOf="@id/progressoNivel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnDesafios"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp" />
+
+    <Button
+        android:id="@+id/btnDesafios"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#FF6B35"
+        android:text="🎯 Desafios"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/progressoNivel"
+        app:layout_constraintStart_toEndOf="@id/btnConquistas"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp" />
+
     <Button
         android:id="@+id/btnMonitor"
         android:layout_width="wrap_content"

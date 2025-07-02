@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardConquista"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#121212"
+    android:background="?attr/selectableItemBackground">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:background="#121212">
+
+        <!-- Ícone da Conquista -->
+        <FrameLayout
+            android:id="@+id/frameIcone"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/circle_white">
+
+            <ImageView
+                android:id="@+id/ivIconeConquista"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:src="@drawable/baseline_directions_run_24_black"
+                android:scaleType="centerCrop" />
+
+            <!-- Overlay para conquistas bloqueadas -->
+            <View
+                android:id="@+id/overlayBloqueada"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#80000000"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/ivIconeBloqueada"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_lock_idle_lock"
+                android:visibility="gone"
+                app:tint="#FFFFFF" />
+
+        </FrameLayout>
+
+        <!-- Badge de Raridade -->
+        <TextView
+            android:id="@+id/tvBadgeRaridade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/badge_raridade_background"
+            android:text="COMUM"
+            android:textColor="#000000"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:padding="4dp"
+            android:paddingHorizontal="8dp" />
+
+        <!-- Informações da Conquista -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/frameIcone"
+            android:layout_toStartOf="@id/tvBadgeRaridade"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTituloConquista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Título da Conquista"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvDescricaoConquista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Descrição da conquista"
+                android:textSize="14sp"
+                android:textColor="#DDDDDD"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvPontosConquista"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="+100 pts"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#27a348"
+                android:drawableStart="@android:drawable/btn_star_big_on"
+                android:drawablePadding="4dp"
+                android:gravity="center_vertical" />
+
+        </LinearLayout>
+
+        <!-- Barra de Progresso -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/frameIcone"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical">
+
+            <ProgressBar
+                android:id="@+id/progressBarConquista"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:progress="0"
+                android:progressTint="#27a348"
+                android:progressBackgroundTint="#424242" />
+
+            <TextView
+                android:id="@+id/tvProgressoConquista"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="0% concluído"
+                android:textSize="12sp"
+                android:textColor="#DDDDDD" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>

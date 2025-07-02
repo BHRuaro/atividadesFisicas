@@ -2,4 +2,20 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Cores do projeto Active Life -->
+    <color name="background_dark">#121212</color>
+    <color name="primary_green">#27a348</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_gray">#DDDDDD</color>
+    <color name="button_gray">#DDDDDD</color>
+    <color name="cinza_escuro">#424242</color>
+    
+    <!-- Cores para compatibilidade com o adaptador -->
+    <color name="raridade_comum">#27a348</color>
+    <color name="raridade_rara">#4CAF50</color>
+    <color name="raridade_epica">#FFD700</color>
+    <color name="raridade_lendaria">#FF6B35</color>
+    <color name="texto_sucesso">#27a348</color>
+    <color name="texto_secundario">#DDDDDD</color>
 </resources>
