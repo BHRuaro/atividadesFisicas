@@ -15,6 +15,8 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.core.widget.addTextChangedListener
+import br.edu.atividadesfisicas.conviteGrupo.ConviteGrupo
+import br.edu.atividadesfisicas.conviteGrupo.StatusConvite
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 
@@ -65,6 +67,8 @@ class CriarGruposActivity : AppCompatActivity() {
     }
 
     private fun fetchInitialUsers() {
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
         isLoading = true
         db.collection("usuarios")
             .orderBy("pontuacao", Query.Direction.DESCENDING)
@@ -73,7 +77,9 @@ class CriarGruposActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 if (!result.isEmpty) {
                     listaUsuarios.clear()
-                    listaUsuarios.addAll(result.toObjects(PerfilUsuario::class.java))
+                    val usuarios = result.toObjects(PerfilUsuario::class.java)
+                        .filter { it.uid != currentUserUid } // Filtra o usuário atual
+                    listaUsuarios.addAll(usuarios)
                     lastVisible = result.documents[result.size() - 1]
                     adapter.notifyDataSetChanged()
                 }
@@ -86,6 +92,8 @@ class CriarGruposActivity : AppCompatActivity() {
 
     private fun fetchMoreUsers() {
         if (isLoading || lastVisible == null) return
+        
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         isLoading = true
         db.collection("usuarios")
@@ -96,8 +104,12 @@ class CriarGruposActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 if (!result.isEmpty) {
                     val novosUsuarios = result.toObjects(PerfilUsuario::class.java)
+                        .filter { it.uid != currentUserUid } // Filtra o usuário atual
                     listaUsuarios.addAll(novosUsuarios)
-                    adapter.notifyItemRangeInserted(listaUsuarios.size - novosUsuarios.size, novosUsuarios.size)
+                    adapter.notifyItemRangeInserted(
+                        listaUsuarios.size - novosUsuarios.size,
+                        novosUsuarios.size
+                    )
                     lastVisible = result.documents[result.size() - 1]
                 } else {
                     lastVisible = null
@@ -121,8 +133,11 @@ class CriarGruposActivity : AppCompatActivity() {
     }
 
     private fun filtrarUsuarios(texto: String) {
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
         val filtrados = listaUsuarios.filter {
-            it.nome.contains(texto, ignoreCase = true) || it.email.contains(texto, ignoreCase = true)
+            it.uid != currentUserUid && // Sempre filtra o usuário atual
+            (it.nome.contains(texto, ignoreCase = true) || it.email.contains(texto, ignoreCase = true))
         }
         adapter.atualizarLista(filtrados)
     }
@@ -145,14 +160,15 @@ class CriarGruposActivity : AppCompatActivity() {
         val grupo = Grupo(
             nome = nomeGrupo,
             descricao = descricaoGrupo,
-            membros = usuariosSelecionados.toList(),
+            membros = listOf(user.uid),
             criadoEm = Timestamp.now(),
             criadoPorUid = user.uid
         )
 
         db.collection("grupos")
             .add(grupo)
-            .addOnSuccessListener {
+            .addOnSuccessListener { grupoRef ->
+                enviarConvites(grupoRef.id, nomeGrupo, descricaoGrupo, user.uid)
                 Toast.makeText(this, "Grupo criado com sucesso!", Toast.LENGTH_SHORT).show()
                 finish()
             }
@@ -160,7 +176,6 @@ class CriarGruposActivity : AppCompatActivity() {
                 Toast.makeText(this, "Erro ao salvar grupo", Toast.LENGTH_SHORT).show()
             }
     }
-
 
     private fun mostrarInfoPontuacao() {
         val builder = AlertDialog.Builder(this)
@@ -173,5 +188,31 @@ class CriarGruposActivity : AppCompatActivity() {
         )
         builder.setPositiveButton("Entendi") { dialog, _ -> dialog.dismiss() }
         builder.show()
+    }
+
+    private fun enviarConvites(
+        grupoId: String,
+        nomeGrupo: String,
+        descricaoGrupo: String,
+        remetenteUid: String
+    ) {
+        db.collection("usuarios").document(remetenteUid).get()
+            .addOnSuccessListener { remetenteDoc ->
+                val remetenteNome = remetenteDoc.getString("nome") ?: "Usuário"
+                usuariosSelecionados.forEach { destinatarioUid ->
+                    val convite = ConviteGrupo(
+                        grupoId = grupoId,
+                        nomeGrupo = nomeGrupo,
+                        descricaoGrupo = descricaoGrupo,
+                        remetenteUid = remetenteUid,
+                        remetenteNome = remetenteNome,
+                        destinatarioUid = destinatarioUid,
+                        status = StatusConvite.PENDENTE
+                    )
+
+                    db.collection("convites")
+                        .add(convite)
+                }
+            }
     }
 }
