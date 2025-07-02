@@ -60,7 +60,7 @@ class MonitorService : Service(), SensorEventListener {
     }
 
     interface StepCounterListener {
-        fun onStepCountChanged(steps: Int) // Este método enviará apenas os passos da sessão
+        fun onStepCountChanged(steps: Int)
     }
 
     inner class LocalBinder : Binder() {
@@ -132,7 +132,7 @@ class MonitorService : Service(), SensorEventListener {
         }
 
         sensorManager?.let {
-            it.unregisterListener(this) // Sempre desregistre antes de registrar para evitar duplicatas
+            it.unregisterListener(this)
 
             stepCounterSensor = it.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             if (stepCounterSensor != null && permissionToPedometro) {
