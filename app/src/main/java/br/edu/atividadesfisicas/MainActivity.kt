@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.atividadesfisicas.grupo.GruposActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -13,16 +15,18 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-private const val USUARIO = "Usuário"
-
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var btnMonitor : Button;
+    private lateinit var btnMonitor : Button
     private lateinit var btnRanking: Button
     private lateinit var tvWelcome: TextView
     private lateinit var tvPoints: TextView
 
     private var pontuacaoListener: ListenerRegistration? = null
+
+    companion object {
+        private const val USUARIO = "Usuário"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,16 +46,48 @@ class MainActivity : AppCompatActivity() {
             mostrarInfoPontuacao()
         }
 
-        btnMonitor = findViewById(R.id.btnMonitor);
+        val logoutContainer = findViewById<LinearLayout>(R.id.logoutContainer)
+        logoutContainer.setOnClickListener {
+            mostrarDialogoLogout()
+        }
+
+        btnMonitor = findViewById(R.id.btnMonitor)
 
         btnMonitor.setOnClickListener {
             val intent = Intent(this@MainActivity, MonitorActivity::class.java)
             startActivity(intent)
-        };
+        }
 
         // Carregar informações do usuário
         carregarInfoUsuario()
         setupPontuacaoListener()
+    }
+
+    private fun mostrarDialogoLogout() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Sair")
+        builder.setMessage("Tem certeza que deseja sair da sua conta?")
+        builder.setPositiveButton("Sair") { _, _ ->
+            realizarLogout()
+        }
+        builder.setNegativeButton("Cancelar") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.show()
+    }
+
+    private fun realizarLogout() {
+        // Limpar o perfil do usuário armazenado
+        LoginActivity.currentUserProfile = null
+
+        // Fazer logout do Firebase Auth
+        FirebaseAuth.getInstance().signOut()
+
+        // Redirecionar para a tela de login
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun carregarInfoUsuario() {
@@ -136,12 +172,12 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, RankingActivity ::class.java)
         startActivity(intent)
 
-        btnMonitor = findViewById(R.id.btnMonitor);
+        btnMonitor = findViewById(R.id.btnMonitor)
 
         btnMonitor.setOnClickListener {
             val intent = Intent(this@MainActivity, MonitorActivity::class.java)
             startActivity(intent)
-        };
+        }
     }
 
 
@@ -151,7 +187,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mostrarInfoPontuacao() {
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
         builder.setTitle("Como os pontos funcionam?")
         builder.setMessage(
             "A cada passo dado, você ganha pontos automaticamente!\n\n" +

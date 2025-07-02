@@ -1,3 +1,4 @@
+
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -29,7 +30,7 @@
                 android:layout_gravity="center"
                 android:contentDescription="Ícone do aplicativo"
                 android:src="@drawable/baseline_directions_run_24_black" />
-        
+
         </FrameLayout>
 
         <TextView
@@ -47,10 +48,41 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="12dp"
+            android:layout_marginEnd="8dp"
             android:contentDescription="Informações"
             android:src="@drawable/baseline_question_mark_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="2dp"
             android:onClick="mostrarInfoPontuacao"/>
+
+        <LinearLayout
+            android:id="@+id/logoutContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="15dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:paddingHorizontal="4dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@android:drawable/ic_lock_power_off"
+                android:contentDescription="Ícone sair"
+                android:layout_marginEnd="3dp"
+                app:tint="#000000" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sair"
+                android:textColor="#000000"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
     </androidx.appcompat.widget.Toolbar>
 
