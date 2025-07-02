@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    tools:context=".MonitorActivity">
+    tools:context=".MonitorActivity"
+    android:fitsSystemWindows="true">
 
   <TextView
       android:id="@+id/stepsTextView"
