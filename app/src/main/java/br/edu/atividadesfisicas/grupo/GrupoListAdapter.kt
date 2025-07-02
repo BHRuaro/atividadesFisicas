@@ -32,7 +32,7 @@ class GrupoListAdapter (
         parent: ViewGroup,
         viewType: Int
     ): UserViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_grupos, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_grupo, parent, false)
         return UserViewHolder(view)
     }
 
