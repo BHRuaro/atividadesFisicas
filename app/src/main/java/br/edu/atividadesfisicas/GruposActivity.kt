@@ -1,6 +1,8 @@
 package br.edu.atividadesfisicas
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -31,5 +33,10 @@ class GruposActivity : AppCompatActivity() {
             dialog.dismiss()
         }
         builder.show()
+    }
+
+    fun criarGrupo(view: View) {
+        val intent = Intent(this, CriarGruposActivity::class.java)
+        startActivity(intent)
     }
 }
