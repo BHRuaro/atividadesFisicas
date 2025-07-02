@@ -21,9 +21,6 @@
         android:theme="@style/Theme.AtividadesFisicas"
         tools:targetApi="31">
         <activity
-            android:name=".UsuarioAdapter"
-            android:exported="false" />
-        <activity
             android:name=".CriarGruposActivity"
             android:exported="false" />
         <activity
@@ -55,6 +52,10 @@
         <activity
             android:name=".RankingActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".GrupoDetailActivity"
+            android:exported="false"/>
     </application>
 
 </manifest>
