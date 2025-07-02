@@ -28,10 +28,6 @@ class MainActivity : AppCompatActivity() {
         ivQuestion.setOnClickListener {
             mostrarInfoPontuacao()
         }
-    }
-    fun verRanking() {
-        val intent = Intent(this, RankingActivity ::class.java)
-        startActivity(intent)
 
         btnMonitor = findViewById(R.id.btnMonitor);
 
@@ -41,6 +37,11 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         });
+
+    }
+    fun verRanking() {
+        val intent = Intent(this, RankingActivity ::class.java)
+        startActivity(intent)
 
         btnMonitor = findViewById(R.id.btnMonitor);
 

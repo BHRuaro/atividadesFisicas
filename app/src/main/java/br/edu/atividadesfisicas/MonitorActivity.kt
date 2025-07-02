@@ -11,16 +11,17 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import br.edu.atividadesfisicas.MonitorService
 
 class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener {
-    // Não precisamos mais de permissão ACTIVITY_RECOGNITION para o acelerômetro direto
-    // private static final int PERMISSION_REQUEST_ACTIVITY_RECOGNITION = 1;
+
     private var monitorService: MonitorService? = null
     private var isBound = false
     private var stepsTextView: TextView? = null
+    private var permissionToPedometro : Boolean = false
 
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -48,6 +49,17 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
         startAndBindService() // Inicia e vincula o serviço diretamente
     }
 
+    private fun checkAndAskForPedometro ()
+    {
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+                // Your logic here to handle the permission result
+                if (isGranted) {
+                    permissionToPedometro = true;
+                }
+            }
+
+    }
+
     private fun checkAccelerometerAvailability() {
         val sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) == null) {
@@ -56,8 +68,8 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
         }
     }
 
-    // Remover o método onRequestPermissionsResult, pois não precisamos mais dele para o acelerômetro
     private fun startAndBindService() {
+
         val serviceIntent = Intent(
             this,
             MonitorService::class.java
@@ -70,25 +82,33 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
         }
 
         bindService(serviceIntent, connection, BIND_AUTO_CREATE)
+
     }
 
     override fun onStart() {
+
         super.onStart()
+
         if (!isBound) {
             val serviceIntent = Intent(
                 this,
                 MonitorService::class.java
             )
+            serviceIntent.putExtra("PERMISSION", permissionToPedometro)
+            serviceIntent.putExtra("LAST_STEPS", LoginActivity.currentUserProfile?.pontuacao)
             bindService(serviceIntent, connection, BIND_AUTO_CREATE)
         } else {
             if (monitorService != null) {
                 monitorService!!.setStepCounterListener(this)
             }
         }
+
     }
 
     override fun onStop() {
+
         super.onStop()
+
         if (isBound) {
             if (monitorService != null) {
                 monitorService!!.setStepCounterListener(null)
@@ -97,11 +117,14 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
             isBound = false
             Log.d(TAG, "Activity desvinculada do serviço.") //para debug
         }
+
     }
 
     override fun onDestroy() {
+
         super.onDestroy()
         Log.d(TAG, "MonitorActivity destruída.") //para debug
+
     }
 
     override fun onStepCountChanged(steps: Int) {

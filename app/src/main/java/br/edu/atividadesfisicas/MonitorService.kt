@@ -12,9 +12,14 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Binder
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore // Import FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore // Import ktx extension
+import com.google.firebase.ktx.Firebase // Import Firebase instance
 
 class MonitorService : Service(), SensorEventListener {
 
@@ -24,24 +29,32 @@ class MonitorService : Service(), SensorEventListener {
 
     private var sensorManager: SensorManager? = null
     private var accelerometerSensor: Sensor? = null
+
     private var stepCounterSensor: Sensor? = null
+    private var initialStepCount: Int = 0
+
     private var totalSteps = 0
     private var listener: StepCounterListener? = null
 
+    //flag de autorizacao para o pedometro
+    private var permissionToPedometro : Boolean = false
+
     // Variáveis para a lógica de detecção de passos com acelerômetro, método 2
-    private val ACCELERATION_THRESHOLD = 10.0f // For absolute acceleration magnitude (m/s^2)
-    private val STEP_DETECTION_THRESHOLD = 6f // Threshold for the change in acceleration magnitude (adjust carefully!)
+    private val ACCELERATION_THRESHOLD = 3f // For absolute acceleration magnitude (m/s^2)
+    private val STEP_DETECTION_THRESHOLD = 1f // Threshold for the change in acceleration magnitude (adjust carefully!)
     private val TIME_BETWEEN_STEPS_MS = 300L // Minimum time between detected steps to avoid double countingA
 
     private var lastAccelerationMagnitude: Float = 0f
     private var lastStepTime: Long = 0L
 
-    // Variáveis para a lógica de detecção de passos com acelerômetro, método 1
-    private var lastTime: Long = 0
-    private var lastX = 0f
-    private var lastY = 0f
-    private var lastZ = 0f
-    private val SHAKE_THRESHOLD = 1450 // Limiar de "sacudida" para detectar um passo (ajuste este valor!)
+    // Firebase related variables
+    private var baseSteps: Int? = null
+    private lateinit var firestore: FirebaseFirestore // Use Firestore
+    private lateinit var auth: FirebaseAuth
+    private lateinit var handler : Handler
+    private val SAVE_INTERVAL_MS: Long = 5 * 1000L // Salvar dados a cada 1 minuto
+    // Declare saveStepsRunnable as lateinit var, also to be initialized in onCreate
+    private lateinit var saveStepsRunnable: Runnable
 
     // Interface para comunicação com a Activity
     interface StepCounterListener {
@@ -55,35 +68,51 @@ class MonitorService : Service(), SensorEventListener {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Serviço criado.")
+
+        // Inicializar Firebase
+        firestore = Firebase.firestore // Inicializa o Firestore
+        auth = FirebaseAuth.getInstance()
+
+        // Initialize saveStepsRunnable HERE, after handler is initialized
+        handler = Handler(mainLooper) // <-- This must come before saveStepsRunnable
+        saveStepsRunnable = object : Runnable { // <-- CHANGE: Initialize runnable here
+            override fun run() {
+                saveStepsToFirestore()
+                handler.postDelayed(this, SAVE_INTERVAL_MS)
+            }
+        }
+
+        // Configurar notificação para Foreground Service
         createNotificationChannel()
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Contador de Passos") // Generic title
+            .setContentTitle("Contador de Passos")
             .setContentText("Contando seus passos em segundo plano.")
             .setSmallIcon(android.R.drawable.ic_menu_directions)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
         startForeground(1, notification)
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         sensorManager?.let {
             stepCounterSensor = it.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-            if (stepCounterSensor != null) {
+            if (stepCounterSensor != null && permissionToPedometro) {
                 Log.d(TAG, "Sensor TYPE_STEP_COUNTER disponível. Usando-o.")
                 it.registerListener(this, stepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL)
-                // When using TYPE_STEP_COUNTER, totalSteps is the cumulative count from boot
-                // You'll need to store the initial value and subtract it to get steps for your session.
-                // Or use TYPE_STEP_DETECTOR.
             } else {
                 Log.w(TAG, "Sensor TYPE_STEP_COUNTER não disponível. Tentando TYPE_ACCELEROMETER.")
                 accelerometerSensor = it.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
                 if (accelerometerSensor == null) {
-                    Log.e(TAG, "Nenhum sensor de passo ou acelerômetro disponível.")
-                    // Consider stopping the service or informing the user
+                    Log.e(TAG, "Nenhum sensor de passo ou acelerômetro disponível no dispositivo. Parando serviço.")
+                    stopSelf()
                 } else {
                     it.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME)
                     Log.d(TAG, "Sensor do acelerômetro registrado.")
                 }
             }
         }
+
+        // Inicia o salvamento periódico para o Firestore
+        handler.post(saveStepsRunnable)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -103,76 +132,83 @@ class MonitorService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.let{
+            permissionToPedometro = it.getBooleanExtra("PERMISSION", false)
+            baseSteps = it.getIntExtra("LAST_STEPS", 0)
+        }
         Log.d(TAG, "onStartCommand: Serviço iniciado.")
         // START_STICKY é bom para serviços que rodam indefinidamente.
         return START_STICKY
     }
 
-    //forma que leva em consideração apenas o limiar de diferença entre duas medições
-    /*override fun onSensorChanged(event: SensorEvent?) {
-            if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
-                val currentTime = System.currentTimeMillis()
-                // A cada 100ms (0.1 segundos) ou mais, processamos os dados
-                if ((currentTime - lastTime) > 100) {
-                    val diffTime = (currentTime - lastTime)
-
-                    val x = event.values[0]
-                    val y = event.values[1]
-                    val z = event.values[2]
-
-                    // Calcular a magnitude da aceleração ou a mudança em relação ao estado anterior
-                    // Uma forma simples de detectar "movimento":
-                    val speed = Math.abs(x + y + z - lastX - lastY - lastZ) / diffTime * 10000
-
-                    // Log.d(TAG, "Speed: $speed, X:$x, Y:$y, Z:$z")
-
-                    if (speed > SHAKE_THRESHOLD) {
-                        totalSteps++
-                        Log.d(TAG, "Passo detectado! Total: $totalSteps")
-
-                        // Notifica a Activity (se houver um listener)
-                        listener?.onStepCountChanged(totalSteps)
-                    }
-
-                    lastX = x
-                    lastY = y
-                    lastZ = z
-                    lastTime = currentTime
-                }
-            }
-    }*/
-
-    //forma calculando comprimento do vetor de acelaração, precisa de ajustes
+    // registra o evento de nova informação do sensor, usando pedometro primeiro e acelerometro se pedometro nao disponivel
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
-            val x = event.values[0]
-            val y = event.values[1]
-            val z = event.values[2]
+        when (event?.sensor?.type) {
+            Sensor.TYPE_STEP_COUNTER -> {
+                val currentSensorSteps = event.values[0].toInt()
+                Log.d(TAG, "TYPE_STEP_COUNTER - Leitura bruta: $currentSensorSteps")
 
-            // Calculate the magnitude of the total acceleration vector (Comprimento)
-            val currentAccelerationMagnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+                if (initialStepCount == 0) {
+                    initialStepCount = currentSensorSteps
+                    Log.d(TAG, "TYPE_STEP_COUNTER - Initializando initialStepCount com: $initialStepCount")
+                }
 
-            val currentTime = System.currentTimeMillis()
+                totalSteps = currentSensorSteps - initialStepCount
+                Log.d(TAG, "Passos (TYPE_STEP_COUNTER): $totalSteps (Bruto: $currentSensorSteps - Inicial: $initialStepCount)")
 
-            // Basic peak detection: look for a significant increase in magnitude
-            // followed by a decrease, and ensure enough time has passed since the last step.
-            if (currentAccelerationMagnitude > ACCELERATION_THRESHOLD &&
-                (currentAccelerationMagnitude - lastAccelerationMagnitude) > STEP_DETECTION_THRESHOLD &&
-                (currentTime - lastStepTime) > TIME_BETWEEN_STEPS_MS
-            ) {
-                totalSteps++
-                Log.d(TAG, "Passo detectado! Total: $totalSteps, Magnitude: $currentAccelerationMagnitude")
                 listener?.onStepCountChanged(totalSteps)
-                lastStepTime = currentTime // Update the last step time
             }
+            Sensor.TYPE_ACCELEROMETER -> {
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
 
-            lastAccelerationMagnitude = currentAccelerationMagnitude // Update for next comparison
+                val currentAccelerationMagnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+                val currentTime = System.currentTimeMillis()
+
+                if (currentAccelerationMagnitude > ACCELERATION_THRESHOLD &&
+                    (currentAccelerationMagnitude - lastAccelerationMagnitude) > STEP_DETECTION_THRESHOLD &&
+                    (currentTime - lastStepTime) > TIME_BETWEEN_STEPS_MS
+                ) {
+                    totalSteps++
+                    Log.d(TAG, "Passo detectado (Acelerômetro)! Total: $totalSteps, Magnitude: $currentAccelerationMagnitude")
+                    listener?.onStepCountChanged(totalSteps)
+                    lastStepTime = currentTime
+                }
+                lastAccelerationMagnitude = currentAccelerationMagnitude
+            }
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Nada a fazer aqui na maioria dos casos
+    private fun saveStepsToFirestore() {
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            Log.w(TAG, "Nenhum usuário logado. Não é possível salvar passos no Firestore.")
+            return
+        }
+
+        // Obtém uma referência ao documento do usuário no Firestore
+        val userDocRef = firestore.collection("usuarios").document(userId)
+
+        // Cria um mapa com os dados que você quer atualizar
+        // Assumindo que 'pontuacao' é o campo que armazena os passos totais ou uma pontuação baseada neles
+        totalSteps += baseSteps!!
+        baseSteps = LoginActivity.currentUserProfile?.pontuacao
+        Log.d("D", "BASE: $baseSteps")
+        val updates = hashMapOf<String, Any>(
+            "pontuacao" to totalSteps // Atualiza o campo 'pontuacao' com o totalSteps + baseSteps que estavam no banco
+        )
+
+        userDocRef.update(updates)
+            .addOnSuccessListener {
+                Log.d(TAG, "Passos salvos no Firestore: $totalSteps para o usuário $userId")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Erro ao salvar passos no Firestore para o usuário $userId: ${e.message}")
+            }
     }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
     override fun onDestroy() {
         super.onDestroy()

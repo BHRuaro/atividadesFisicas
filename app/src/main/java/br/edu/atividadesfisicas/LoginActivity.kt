@@ -33,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
         private const val TAG = "LoginActivity"
         private const val WEB_CLIENT_ID =
             "449772724679-subi61dcu9evv89qoi3pvn1sp5r23bqa.apps.googleusercontent.com"
+        var currentUserProfile: PerfilUsuario? = null
     }
 
     private fun redirectToMain() {
@@ -126,7 +127,13 @@ class LoginActivity : AppCompatActivity() {
         docRef.get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    Log.d(TAG, "Perfil de usuário já existe, não será recriado.")
+                    val perfil = document.toObject(PerfilUsuario::class.java)
+                    if (perfil != null) {
+                        // Preenche o objeto no companion object
+                        currentUserProfile = perfil
+                        Log.d(TAG, "Perfil de usuário carregado: ${currentUserProfile?.nome}")
+                        redirectToMain() // Redireciona após carregar
+                    }
                 } else {
                     val perfilUsuario = PerfilUsuario(
                         uid = user.uid,
