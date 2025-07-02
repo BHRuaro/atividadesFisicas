@@ -23,6 +23,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
+
 class GruposActivity : AppCompatActivity(), OnGroupClickListener {
 
     private lateinit var btnVerificarConvites: Button
@@ -215,6 +216,7 @@ class GruposActivity : AppCompatActivity(), OnGroupClickListener {
         val intent = Intent(this, GrupoDetailActivity::class.java)
         intent.putExtra("EXTRA_GROUP_ID", group.id)
         startActivity(intent)
+    }
 
     override fun onResume() {
         super.onResume()
