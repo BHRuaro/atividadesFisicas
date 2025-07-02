@@ -74,7 +74,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="16dp"
-        android:text="Você tem convites de grupos aguardando sua resposta"
+        android:text="Aqui você encontra as solicitações de convites de grupo pendentes."
         android:textColor="#BBBBBB"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"

@@ -1,11 +1,15 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.grupo
 
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import br.edu.atividadesfisicas.R
 import br.edu.atividadesfisicas.conviteGrupo.SolicitacoesPendentesActivity
 import br.edu.atividadesfisicas.conviteGrupo.StatusConvite
 import com.google.firebase.auth.FirebaseAuth
@@ -16,7 +20,11 @@ import com.google.firebase.ktx.Firebase
 class GruposActivity : AppCompatActivity() {
 
     private lateinit var btnVerificarConvites: Button
+    private lateinit var rvGrupos: RecyclerView
+    private lateinit var gruposAdapter: GruposAdapter
+
     private var convitesListener: ListenerRegistration? = null
+    private var gruposListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +41,22 @@ class GruposActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Adicionar listener para contar convites pendentes
+        rvGrupos = findViewById<RecyclerView>(R.id.rvGrupos)
+        setupRecyclerView()
+
         setupConvitesListener()
+        setupGruposListener()
+    }
+
+    private fun setupRecyclerView() {
+        gruposAdapter = GruposAdapter { _ ->
+            // Implementar acesso a tela de detalhe do grupo
+        }
+
+        rvGrupos.apply {
+            layoutManager = LinearLayoutManager(this@GruposActivity)
+            adapter = gruposAdapter
+        }
     }
 
     private fun setupConvitesListener() {
@@ -56,8 +78,30 @@ class GruposActivity : AppCompatActivity() {
             }
     }
 
+    private fun setupGruposListener() {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val db = Firebase.firestore
+
+        gruposListener = db.collection("grupos")
+            .whereArrayContains("membros", currentUser.uid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Tratar erro se necessário
+                    return@addSnapshotListener
+                }
+
+                val grupos = snapshot?.documents?.mapNotNull { document ->
+                    document.toObject(Grupo::class.java)
+                } ?: emptyList()
+
+                runOnUiThread {
+                    gruposAdapter.updateGrupos(grupos)
+                }
+            }
+    }
+
     private fun mostrarInfoPontuacao() {
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
         builder.setTitle("Como os pontos funcionam?")
         builder.setMessage(
             "A cada passo dado, você ganha pontos automaticamente!\n\n" +
@@ -79,10 +123,12 @@ class GruposActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         setupConvitesListener() // Reconfigurar o listener quando voltar à tela
+        setupGruposListener() // Reconfigurar o listener dos grupos
     }
 
     override fun onDestroy() {
         super.onDestroy()
         convitesListener?.remove() // Limpar o listener
+        gruposListener?.remove() // Limpar o listener dos grupos
     }
 }

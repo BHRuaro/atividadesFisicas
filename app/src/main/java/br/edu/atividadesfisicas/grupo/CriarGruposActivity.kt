@@ -1,4 +1,4 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.grupo
 
 import android.os.Bundle
 import android.widget.Button
@@ -15,6 +15,9 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.core.widget.addTextChangedListener
+import br.edu.atividadesfisicas.PerfilUsuario
+import br.edu.atividadesfisicas.R
+import br.edu.atividadesfisicas.UsuarioAdapter
 import br.edu.atividadesfisicas.conviteGrupo.ConviteGrupo
 import br.edu.atividadesfisicas.conviteGrupo.StatusConvite
 import com.google.firebase.Timestamp

@@ -24,10 +24,10 @@
             android:name=".UsuarioAdapter"
             android:exported="false" />
         <activity
-            android:name=".CriarGruposActivity"
+            android:name=".grupo.CriarGruposActivity"
             android:exported="false" />
         <activity
-            android:name=".GruposActivity"
+            android:name=".grupo.GruposActivity"
             android:exported="false" />
 
         <service
