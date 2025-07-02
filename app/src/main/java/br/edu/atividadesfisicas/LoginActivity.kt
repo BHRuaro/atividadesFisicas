@@ -23,17 +23,6 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 
-data class PerfilUsuario(
-    var uid: String = "",
-    var nome: String = "",
-    var email: String = "",
-    var pontuacao: Int = 0,
-    var dataCadastro: Timestamp? = null
-) {
-    constructor() : this("", "", "", 0, null)
-}
-
-
 class LoginActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var credentialManager: CredentialManager
