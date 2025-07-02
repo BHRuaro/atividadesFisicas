@@ -51,9 +51,31 @@ class LoginActivity : AppCompatActivity() {
         credentialManager = CredentialManager.create(this)
         firestore = Firebase.firestore
 
-        auth.currentUser?.let {
+        /*auth.currentUser?.let {
             redirectToMain()
             return
+        }*/
+
+        // *** AQUI É ONDE VOCÊ DEVE PREENCHER currentUserProfile ***
+        auth.currentUser?.let { firebaseUser ->
+            // Se o usuário já estiver logado, carregamos o perfil
+            loadUserProfile(firebaseUser.uid) { success ->
+                if (success) {
+                    // O perfil foi carregado com sucesso, agora podemos redirecionar
+                    redirectToMain()
+                } else {
+                    // O perfil não foi encontrado ou houve um erro ao carregar.
+                    // Isso pode indicar um problema (ex: usuário autenticado mas sem perfil no Firestore).
+                    // Você pode optar por:
+                    // 1. Criar um novo perfil para ele (se essa for a lógica desejada).
+                    // 2. Deslogar o usuário e forçá-lo a fazer login novamente.
+                    Log.e(TAG, "Falha ao carregar perfil para usuário já logado: ${firebaseUser.uid}")
+                    Toast.makeText(this, "Erro ao carregar perfil de usuário. Por favor, tente novamente.", Toast.LENGTH_LONG).show()
+                    auth.signOut() // Exemplo: deslogar o usuário
+                    // Não chame redirectToMain() aqui, pois o perfil não está pronto
+                }
+            }
+            return // Retorna para não continuar com o setup do botão de login
         }
 
         btnGoogle = findViewById(R.id.btnGoogle)
@@ -154,6 +176,31 @@ class LoginActivity : AppCompatActivity() {
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Erro ao verificar existência do perfil", exception)
+            }
+    }
+
+    private fun loadUserProfile(uid: String, onComplete: (Boolean) -> Unit) {
+        val docRef = firestore.collection("usuarios").document(uid)
+        docRef.get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val perfil = document.toObject(PerfilUsuario::class.java)
+                    if (perfil != null) {
+                        currentUserProfile = perfil
+                        Log.d(TAG, "Perfil de usuário carregado para usuário já logado: ${currentUserProfile?.nome}")
+                        onComplete(true) // Indica sucesso
+                    } else {
+                        Log.e(TAG, "Documento existe, mas não pôde ser convertido para PerfilUsuario.")
+                        onComplete(false) // Indica falha na conversão
+                    }
+                } else {
+                    Log.w(TAG, "Perfil não encontrado para usuário já logado. Isso pode ser um estado inconsistente.")
+                    onComplete(false) // Indica que o perfil não foi encontrado
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e(TAG, "Erro ao carregar perfil para usuário já logado", exception)
+                onComplete(false) // Indica falha na leitura do Firestore
             }
     }
 
