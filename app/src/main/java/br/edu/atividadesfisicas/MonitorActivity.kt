@@ -9,9 +9,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import br.edu.atividadesfisicas.MonitorService
@@ -22,6 +24,7 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
     private var isBound = false
     private var stepsTextView: TextView? = null
     private var permissionToPedometro : Boolean = false
+    private lateinit var btnParar: TextView
 
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -47,6 +50,17 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
         // Apenas verifica se o acelerômetro está disponível
         checkAccelerometerAvailability()
         startAndBindService() // Inicia e vincula o serviço diretamente
+
+        btnParar = findViewById(R.id.btnParar)
+        btnParar.setOnClickListener {
+            pararMonitoramento()
+        }
+
+        val ivQuestion = findViewById<ImageView>(R.id.ivQuestion)
+        ivQuestion.setOnClickListener {
+            mostrarInfoPontuacao()
+        }
+
     }
 
     private fun checkAndAskForPedometro ()
@@ -132,6 +146,33 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
             stepsTextView!!.text = "Passos: $steps"
             Log.d(TAG, "UI atualizada com passos: $steps")
         }
+    }
+
+    private fun pararMonitoramento() {
+        if (isBound) {
+            unbindService(connection)
+            isBound = false
+            Log.d(TAG, "Serviço desvinculado manualmente.")
+        }
+        val serviceIntent = Intent(this, MonitorService::class.java)
+        stopService(serviceIntent)
+        Toast.makeText(this, "Monitoramento encerrado", Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    private fun mostrarInfoPontuacao() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Como os pontos funcionam?")
+        builder.setMessage(
+            "A cada passo dado, você ganha pontos automaticamente!\n\n" +
+                    "Esses pontos são contabilizados para todos os grupos que você participa " +
+                    "e também somam na sua pontuação do ranking global.\n\n" +
+                    "Continue se movimentando! 🏃‍♀️🔥"
+        )
+        builder.setPositiveButton("Entendi") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.show()
     }
 
     companion object {
