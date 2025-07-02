@@ -3,7 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    android:background="#121212"
+    >
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -30,23 +32,31 @@
 
         </FrameLayout>
         <TextView
-            android:id="@+id/tvGroupName"
+            android:id="@+id/toolbarTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:text="Ranking"
+            android:layout_marginStart="12dp"
+            android:text="Active Life"
+            android:textColor="#FFFFFF"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:textAlignment="center"
-            />
-
+            android:textStyle="bold"  />
     </androidx.appcompat.widget.Toolbar>
 
+    <TextView
+        android:id="@+id/tvGroupName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textAlignment="center"/>
     <TextView
         android:id="@+id/tvGroupDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/tvGroupName"
         android:textSize="16sp"
         android:textAlignment="center"/>
 
