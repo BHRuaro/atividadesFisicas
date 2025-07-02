@@ -39,8 +39,8 @@ class MonitorService : Service(), SensorEventListener {
 
     private var permissionToPedometro : Boolean = false
 
-    private val ACCELERATION_THRESHOLD = 10f
-    private val STEP_DETECTION_THRESHOLD = 6.88f
+    private val ACCELERATION_THRESHOLD = 3f
+    private val STEP_DETECTION_THRESHOLD = 1f
     private val TIME_BETWEEN_STEPS_MS = 300L
 
     private var lastAccelerationMagnitude: Float = 0f
@@ -51,7 +51,7 @@ class MonitorService : Service(), SensorEventListener {
     private lateinit var firestore: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
     private lateinit var handler : Handler
-    private val SAVE_INTERVAL_MS: Long = 10 * 1000L
+    private val SAVE_INTERVAL_MS: Long = 5 * 1000L
     private lateinit var saveStepsRunnable: Runnable
 
     companion object {
@@ -160,7 +160,6 @@ class MonitorService : Service(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         when (event?.sensor?.type) {
-
             Sensor.TYPE_STEP_COUNTER -> {
                 val currentSensorReading = event.values[0].toInt()
                 Log.d(TAG, "TYPE_STEP_COUNTER - Leitura bruta: $currentSensorReading")
@@ -195,7 +194,6 @@ class MonitorService : Service(), SensorEventListener {
                     lastStepTime = currentTime
                 }
                 lastAccelerationMagnitude = currentAccelerationMagnitude
-
             }
         }
     }
