@@ -2,6 +2,7 @@ package br.edu.atividadesfisicas.grupo
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import br.edu.atividadesfisicas.R
+import com.google.firebase.firestore.FirebaseFirestore
 import br.edu.atividadesfisicas.conviteGrupo.SolicitacoesPendentesActivity
 import br.edu.atividadesfisicas.conviteGrupo.StatusConvite
 import com.google.firebase.auth.FirebaseAuth
@@ -21,7 +23,8 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class GruposActivity : AppCompatActivity() {
+
+class GruposActivity : AppCompatActivity(), OnGroupClickListener {
 
     private lateinit var btnVerificarConvites: Button
     private lateinit var rvGrupos: RecyclerView
@@ -29,6 +32,9 @@ class GruposActivity : AppCompatActivity() {
     private lateinit var tvNoGroups: TextView
     private lateinit var gruposAdapter: GruposAdapter
 
+    private lateinit var adapter: GrupoListAdapter
+    private lateinit var db: FirebaseFirestore
+    private lateinit var recyclerView: RecyclerView
     private var convitesListener: ListenerRegistration? = null
     private var gruposListener: ListenerRegistration? = null
     private var allGroups: List<Grupo> = emptyList()
@@ -45,6 +51,10 @@ class GruposActivity : AppCompatActivity() {
         ivQuestion.setOnClickListener {
             mostrarInfoPontuacao()
         }
+        db = Firebase.firestore
+        recyclerView = findViewById(R.id.rvGrupos)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        fetchGrupos()
 
         btnVerificarConvites = findViewById<Button>(R.id.btnConvites)
         btnVerificarConvites.setOnClickListener {
@@ -178,6 +188,33 @@ class GruposActivity : AppCompatActivity() {
 
     fun criarGrupo(view: View) {
         val intent = Intent(this, CriarGruposActivity::class.java)
+        startActivity(intent)
+    }
+    private fun fetchGrupos() {
+        db.collection("grupos")
+            .get()
+            .addOnSuccessListener { documents ->
+                val grupoList = mutableListOf<Grupo>()
+                for (document in documents) {
+                    val grupo = document.toObject(Grupo::class.java)
+                    grupoList.add(grupo)
+                }
+                if (grupoList.isNotEmpty()) {
+                    adapter = GrupoListAdapter(this ,grupoList)
+                    recyclerView.adapter = adapter
+                }
+
+            }
+            .addOnFailureListener { e ->
+                Log.w("RankingActivity", "Erro na busca inicial", e)
+
+            }
+
+    }
+
+    override fun onGroupClick(group: Grupo) {
+        val intent = Intent(this, GrupoDetailActivity::class.java)
+        intent.putExtra("EXTRA_GROUP_ID", group.id)
         startActivity(intent)
     }
 

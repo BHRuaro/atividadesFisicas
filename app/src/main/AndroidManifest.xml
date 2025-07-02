@@ -55,6 +55,10 @@
         <activity
             android:name=".RankingActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".grupo.GrupoDetailActivity"
+            android:exported="false"/>
         <activity
             android:name=".conviteGrupo.SolicitacoesPendentesActivity"
             android:exported="false" />
