@@ -1,13 +1,15 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.grupo
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import br.edu.atividadesfisicas.R
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -34,7 +36,7 @@ class GruposActivity : AppCompatActivity(), OnGroupClickListener {
     }
 
     private fun mostrarInfoPontuacao() {
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
         builder.setTitle("Como os pontos funcionam?")
         builder.setMessage(
             "A cada passo dado, você ganha pontos automaticamente!\n\n" +

@@ -1,11 +1,11 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.grupo
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import br.edu.atividadesfisicas.Grupo
+import br.edu.atividadesfisicas.R
 
 interface OnGroupClickListener {
     fun onGroupClick(group: Grupo) // A função será chamada com o objeto do grupo que foi clicado

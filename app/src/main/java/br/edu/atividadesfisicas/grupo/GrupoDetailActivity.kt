@@ -1,4 +1,4 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.grupo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -7,6 +7,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import br.edu.atividadesfisicas.PerfilUsuario
+import br.edu.atividadesfisicas.R
+import br.edu.atividadesfisicas.RankingAdapter
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
@@ -68,7 +72,7 @@ class GrupoDetailActivity : AppCompatActivity() {
     private fun fetchMembersRanking(memberUids: List<String>) {
         db.collection("usuarios")
 
-            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), memberUids)
+            .whereIn(FieldPath.documentId(), memberUids)
             .orderBy("pontuacao", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->

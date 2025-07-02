@@ -1,4 +1,4 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.grupo
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
