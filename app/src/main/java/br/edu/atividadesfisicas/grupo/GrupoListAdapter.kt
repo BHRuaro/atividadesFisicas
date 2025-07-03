@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import br.edu.atividadesfisicas.R
 
 interface OnGroupClickListener {
-    fun onGroupClick(group: Grupo) // A função será chamada com o objeto do grupo que foi clicado
+    fun onGroupClick(group: Grupo) 
 }
 
 class GrupoListAdapter (

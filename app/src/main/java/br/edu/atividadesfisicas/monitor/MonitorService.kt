@@ -1,11 +1,11 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.monitor
 
+import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -17,6 +17,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import br.edu.atividadesfisicas.auth.LoginActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
@@ -76,7 +77,7 @@ class MonitorService : Service(), SensorEventListener {
 
         // Inicializa baseStepsFromProfile com a pontuação do usuário logado
         // Isso assume que LoginActivity.currentUserProfile já foi preenchido.
-        LoginActivity.currentUserProfile?.let {
+        LoginActivity.Companion.currentUserProfile?.let {
             baseStepsFromProfile = it.pontuacao
             Log.d(TAG, "Base steps carregados do Perfil de Usuário: $baseStepsFromProfile")
         } ?: run {
@@ -128,7 +129,7 @@ class MonitorService : Service(), SensorEventListener {
 
 
         if (sensorManager == null) {
-            sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         }
 
         sensorManager?.let {
@@ -246,11 +247,6 @@ class MonitorService : Service(), SensorEventListener {
         this.listener?.onStepCountChanged(currentSessionSteps)
     }
 
-    fun getCurrentSteps(): Int {
-        // Retorna APENAS os passos da sessão para a UI
-        return currentSessionSteps
-    }
-
     private fun createNotification(): Notification {
         createNotificationChannel()
 
@@ -264,12 +260,12 @@ class MonitorService : Service(), SensorEventListener {
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Contador de Passos")
             .setContentText("Contando seus passos em segundo plano.")
-            .setSmallIcon(android.R.drawable.ic_menu_directions)
+            .setSmallIcon(R.drawable.ic_menu_directions)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
 
         notificationBuilder.addAction(
-            android.R.drawable.ic_menu_close_clear_cancel,
+            R.drawable.ic_menu_close_clear_cancel,
             "Parar Contagem",
             stopServicePendingIntent
         )
@@ -285,7 +281,7 @@ class MonitorService : Service(), SensorEventListener {
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 this.description = description
             }
-            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }

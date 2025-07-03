@@ -17,6 +17,6 @@ data class ConviteGrupo(
     val status: StatusConvite = StatusConvite.PENDENTE,
     val criadoEm: Timestamp = Timestamp.now()
 ) {
-    // Construtor vazio necessário para o Firestore
+    
     constructor() : this("", "", "", "", "", "", "", StatusConvite.PENDENTE, Timestamp.now())
 }

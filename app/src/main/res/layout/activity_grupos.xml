@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -102,18 +103,50 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_end="100dp" />
 
-    <Button
-        android:id="@+id/btnConvites"
+    <!-- Container para o botão de convites com badge -->
+    <FrameLayout
+        android:id="@+id/frameConvites"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:text="Verificar Convites"
-        android:textColor="#000000"
-        android:backgroundTint="#DDDDDD"
         android:layout_marginBottom="24dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnCriarGrupo"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnConvites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#DDDDDD"
+            android:text="Verificar Convites"
+            android:textColor="#000000" />
+
+        <!-- Badge com número de convites -->
+        <FrameLayout
+            android:id="@+id/badgeContainer"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/badge"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvBadgeNumber"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:text="0" />
+
+        </FrameLayout>
+
+    </FrameLayout>
 
     <Button
         android:id="@+id/btnCriarGrupo"
@@ -127,5 +160,5 @@
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/btnConvites" />
+        app:layout_constraintStart_toEndOf="@id/frameConvites" />
 </androidx.constraintlayout.widget.ConstraintLayout>
