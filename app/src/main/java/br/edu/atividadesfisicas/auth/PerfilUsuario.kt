@@ -1,4 +1,4 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.auth
 
 import com.google.firebase.Timestamp
 

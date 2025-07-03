@@ -9,16 +9,20 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import br.edu.atividadesfisicas.auth.LoginActivity
+import br.edu.atividadesfisicas.auth.PerfilUsuario
 import br.edu.atividadesfisicas.grupo.GruposActivity
+import br.edu.atividadesfisicas.monitor.MonitorActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import ranking.RankingActivity
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var btnMonitor : Button
+    private lateinit var btnMonitor: Button
     private lateinit var btnRanking: Button
     private lateinit var tvWelcome: TextView
     private lateinit var tvPoints: TextView
@@ -28,44 +32,65 @@ class MainActivity : AppCompatActivity() {
     private var rankingListener: ListenerRegistration? = null
 
     companion object {
-        private const val USUARIO = "Usuário"
+        private const val TAG = "MainActivity"
+        private const val USUARIO_DEFAULT = "Usuário"
+        private const val RANKING_PREVIEW_LIMIT = 5L
+        private val POSITION_EMOJIS = mapOf(
+            1 to "🥇",
+            2 to "🥈",
+            3 to "🥉"
+        )
+        private const val DEFAULT_EMOJI = "🏆"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inicializar views
+        initializeViews()
+        setupClickListeners()
+        loadUserData()
+        setupListeners()
+    }
+
+    private fun initializeViews() {
         tvWelcome = findViewById(R.id.tvWelcome)
         tvPoints = findViewById(R.id.tvPoints)
         tvRankingPreview = findViewById(R.id.tvRankingPreview)
-
         btnRanking = findViewById(R.id.btnRanking)
-        btnRanking.setOnClickListener {
-            verRanking()
-        }
-
-        val ivQuestion = findViewById<ImageView>(R.id.ivQuestion)
-        ivQuestion.setOnClickListener {
-            mostrarInfoPontuacao()
-        }
-
-        val logoutContainer = findViewById<LinearLayout>(R.id.logoutContainer)
-        logoutContainer.setOnClickListener {
-            mostrarDialogoLogout()
-        }
-
         btnMonitor = findViewById(R.id.btnMonitor)
+    }
 
-        btnMonitor.setOnClickListener {
-            val intent = Intent(this@MainActivity, MonitorActivity::class.java)
-            startActivity(intent)
+    private fun setupClickListeners() {
+        btnRanking.setOnClickListener { navigateToRanking() }
+        btnMonitor.setOnClickListener { navigateToMonitor() }
+        
+        findViewById<ImageView>(R.id.ivQuestion).setOnClickListener { 
+            showPointsInfo() 
         }
+        
+        findViewById<LinearLayout>(R.id.logoutContainer).setOnClickListener { 
+            showLogoutDialog() 
+        }
+    }
 
-        // Carregar informações do usuário
-        carregarInfoUsuario()
+    private fun loadUserData() {
+        loadUserInfo()
         setupPontuacaoListener()
         setupRankingListener()
+    }
+
+    private fun setupListeners() {
+        setupPontuacaoListener()
+        setupRankingListener()
+    }
+
+    private fun navigateToRanking() {
+        startActivity(Intent(this, RankingActivity::class.java))
+    }
+
+    private fun navigateToMonitor() {
+        startActivity(Intent(this, MonitorActivity::class.java))
     }
 
     private fun setupRankingListener() {
@@ -73,190 +98,179 @@ class MainActivity : AppCompatActivity() {
 
         rankingListener = db.collection("usuarios")
             .orderBy("pontuacao", Query.Direction.DESCENDING)
-            .limit(5)
+            .limit(RANKING_PREVIEW_LIMIT)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    runOnUiThread {
-                        tvRankingPreview.text = "Erro ao carregar ranking"
-                    }
+                    updateRankingPreviewError()
                     return@addSnapshotListener
                 }
 
-                val topUsuarios = snapshot?.documents?.mapNotNull { document ->
+                val topUsers = snapshot?.documents?.mapNotNull { document ->
                     document.toObject(PerfilUsuario::class.java)
                 } ?: emptyList()
 
                 runOnUiThread {
-                    atualizarRankingPreview(topUsuarios)
+                    updateRankingPreview(topUsers)
                 }
             }
     }
 
-    private fun atualizarRankingPreview(usuarios: List<PerfilUsuario>) {
-        if (usuarios.isEmpty()) {
+    private fun updateRankingPreviewError() {
+        runOnUiThread {
+            tvRankingPreview.text = "Erro ao carregar ranking"
+        }
+    }
+
+    private fun updateRankingPreview(users: List<PerfilUsuario>) {
+        if (users.isEmpty()) {
             tvRankingPreview.text = "Nenhum usuário encontrado"
             return
         }
 
-        val rankingText = StringBuilder()
-        usuarios.forEachIndexed { index, usuario ->
-            val posicao = index + 1
-            val primeiroNome = usuario.nome.split(" ").firstOrNull() ?: "Usuário"
-            val emoji = when (posicao) {
-                1 -> "🥇"
-                2 -> "🥈" 
-                3 -> "🥉"
-                else -> "🏆"
-            }
+        val rankingText = buildRankingText(users)
+        tvRankingPreview.text = rankingText
+    }
+
+    private fun buildRankingText(users: List<PerfilUsuario>): String {
+        return users.mapIndexed { index, user ->
+            val position = index + 1
+            val firstName = user.nome.split(" ").firstOrNull() ?: USUARIO_DEFAULT
+            val emoji = POSITION_EMOJIS[position] ?: DEFAULT_EMOJI
             
-            rankingText.append("$posicao. $primeiroNome $emoji — ${usuario.pontuacao} pts")
-            if (index < usuarios.size - 1) {
-                rankingText.append("\n")
-            }
-        }
-
-        tvRankingPreview.text = rankingText.toString()
+            "$position. $firstName $emoji — ${user.pontuacao} pts"
+        }.joinToString("\n")
     }
 
-    private fun mostrarDialogoLogout() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Sair")
-        builder.setMessage("Tem certeza que deseja sair da sua conta?")
-        builder.setPositiveButton("Sair") { _, _ ->
-            realizarLogout()
-        }
-        builder.setNegativeButton("Cancelar") { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
+    private fun showLogoutDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Sair")
+            .setMessage("Tem certeza que deseja sair da sua conta?")
+            .setPositiveButton("Sair") { _, _ -> performLogout() }
+            .setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
-    private fun realizarLogout() {
-        // Limpar o perfil do usuário armazenado
+    private fun performLogout() {
         LoginActivity.currentUserProfile = null
-
-        // Fazer logout do Firebase Auth
         FirebaseAuth.getInstance().signOut()
-
-        // Redirecionar para a tela de login
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
         startActivity(intent)
         finish()
     }
 
-    private fun carregarInfoUsuario() {
+    private fun loadUserInfo() {
         val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            // Primeiro, verifica se já temos o perfil carregado no LoginActivity
-            LoginActivity.currentUserProfile?.let { perfil ->
-                atualizarInterface(perfil)
-                return
-            }
-
-            // Se não tiver, busca no Firestore
-            val db = Firebase.firestore
-            db.collection("usuarios").document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val perfil = document.toObject(PerfilUsuario::class.java)
-                        perfil?.let {
-                            // Atualiza o perfil no companion object para uso futuro
-                            LoginActivity.currentUserProfile = it
-                            atualizarInterface(it)
-                        }
-                    } else {
-                        // Se não encontrar o documento, usa o nome do Firebase Auth
-                        val nomeDisplay = currentUser.displayName ?: USUARIO
-                        val primeiroNome = nomeDisplay.split(" ").firstOrNull() ?: USUARIO
-                        tvWelcome.text = "Olá, $primeiroNome!"
-                        tvPoints.text = "Sua pontuação total: 0 pts 🏆"
-                    }
-                }
-                .addOnFailureListener {
-                    // Em caso de erro, usa o nome do Firebase Auth
-                    val nomeDisplay = currentUser.displayName ?: USUARIO
-                    val primeiroNome = nomeDisplay.split(" ").firstOrNull() ?: USUARIO
-                    tvWelcome.text = "Olá, $primeiroNome!"
-                    tvPoints.text = "Sua pontuação total: 0 pts 🏆"
-                }
-        } else {
-            // Usuário não logado, redirecionar para login
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
-            finish()
+        if (currentUser == null) {
+            redirectToLogin()
+            return
         }
+
+        LoginActivity.currentUserProfile?.let { profile ->
+            updateUserInterface(profile)
+            return
+        }
+
+        fetchUserFromFirestore(currentUser.uid)
+    }
+
+    private fun redirectToLogin() {
+        startActivity(Intent(this, LoginActivity::class.java))
+        finish()
+    }
+
+    private fun fetchUserFromFirestore(uid: String) {
+        val db = Firebase.firestore
+        db.collection("usuarios").document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+                handleUserDocumentSuccess(document)
+            }
+            .addOnFailureListener {
+                useDefaultUserInfo()
+            }
+    }
+
+    private fun handleUserDocumentSuccess(document: com.google.firebase.firestore.DocumentSnapshot) {
+        if (document.exists()) {
+            val profile = document.toObject(PerfilUsuario::class.java)
+            profile?.let {
+                LoginActivity.currentUserProfile = it
+                updateUserInterface(it)
+            }
+        } else {
+            useDefaultUserInfo()
+        }
+    }
+
+    private fun useDefaultUserInfo() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val displayName = currentUser?.displayName ?: USUARIO_DEFAULT
+        val firstName = displayName.split(" ").firstOrNull() ?: USUARIO_DEFAULT
+        
+        tvWelcome.text = "Olá, $firstName!"
+        tvPoints.text = "Sua pontuação total: 0 pts 🏆"
     }
 
     private fun setupPontuacaoListener() {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val db = Firebase.firestore
 
-        // Listener reativo para a pontuação do usuário
         pontuacaoListener = db.collection("usuarios")
             .document(currentUser.uid)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    return@addSnapshotListener
-                }
+                if (error != null) return@addSnapshotListener
 
                 snapshot?.let { document ->
-                    if (document.exists()) {
-                        val perfil = document.toObject(PerfilUsuario::class.java)
-                        perfil?.let {
-                            // Atualiza o perfil armazenado
-                            LoginActivity.currentUserProfile = it
-                            // Atualiza apenas a pontuação na interface
-                            runOnUiThread {
-                                tvPoints.text = "Sua pontuação total: ${it.pontuacao} pts 🏆"
-                            }
-                        }
-                    }
+                    handlePointsUpdate(document)
                 }
             }
     }
 
-    private fun atualizarInterface(perfil: PerfilUsuario) {
-        val primeiroNome = perfil.nome.split(" ").firstOrNull() ?: USUARIO
-        tvWelcome.text = "Olá, $primeiroNome!"
-        tvPoints.text = "Sua pontuação total: ${perfil.pontuacao} pts 🏆"
+    private fun handlePointsUpdate(document: com.google.firebase.firestore.DocumentSnapshot) {
+        if (document.exists()) {
+            val profile = document.toObject(PerfilUsuario::class.java)
+            profile?.let {
+                LoginActivity.currentUserProfile = it
+                runOnUiThread {
+                    tvPoints.text = "Sua pontuação total: ${it.pontuacao} pts 🏆"
+                }
+            }
+        }
     }
 
-    fun verRanking() {
-        val intent = Intent(this, RankingActivity::class.java)
-        startActivity(intent)
+    private fun updateUserInterface(profile: PerfilUsuario) {
+        val firstName = profile.nome.split(" ").firstOrNull() ?: USUARIO_DEFAULT
+        tvWelcome.text = "Olá, $firstName!"
+        tvPoints.text = "Sua pontuação total: ${profile.pontuacao} pts 🏆"
     }
 
     fun verGrupos(view: View) {
-        val intent = Intent(this, GruposActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, GruposActivity::class.java))
     }
 
-    private fun mostrarInfoPontuacao() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Como os pontos funcionam?")
-        builder.setMessage(
-            "A cada passo dado, você ganha pontos automaticamente!\n\n" +
-                    "Esses pontos são contabilizados para todos os grupos que você participa " +
-                    "e também somam na sua pontuação do ranking global.\n\n" +
-                    "Continue se movimentando! 🏃‍♀️🔥"
-        )
-        builder.setPositiveButton("Entendi") { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
+    private fun showPointsInfo() {
+        AlertDialog.Builder(this)
+            .setTitle("Como os pontos funcionam?")
+            .setMessage(
+                "A cada passo dado, você ganha pontos automaticamente!\n\n" +
+                        "Esses pontos são contabilizados para todos os grupos que você participa " +
+                        "e também somam na sua pontuação do ranking global.\n\n" +
+                        "Continue se movimentando! 🏃‍♀️🔥"
+            )
+            .setPositiveButton("Entendi") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     override fun onResume() {
         super.onResume()
-        // Recarregar as informações do usuário quando voltar para a tela
-        carregarInfoUsuario()
+        loadUserInfo()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Limpar os listeners para evitar vazamentos de memória
         pontuacaoListener?.remove()
         rankingListener?.remove()
     }

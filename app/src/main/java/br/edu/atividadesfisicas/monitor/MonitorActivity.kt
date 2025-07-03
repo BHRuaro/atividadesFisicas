@@ -1,4 +1,4 @@
-package br.edu.atividadesfisicas;
+package br.edu.atividadesfisicas.monitor
 
 import android.content.ComponentName
 import android.content.Intent
@@ -12,11 +12,11 @@ import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import br.edu.atividadesfisicas.MonitorService
+import br.edu.atividadesfisicas.auth.LoginActivity
+import br.edu.atividadesfisicas.R
 
 class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener {
 
@@ -63,17 +63,6 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
 
     }
 
-    private fun checkAndAskForPedometro ()
-    {
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                // Your logic here to handle the permission result
-                if (isGranted) {
-                    permissionToPedometro = true;
-                }
-            }
-
-    }
-
     private fun checkAccelerometerAvailability() {
         val sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) == null) {
@@ -109,7 +98,7 @@ class MonitorActivity : AppCompatActivity(), MonitorService.StepCounterListener 
                 MonitorService::class.java
             )
             serviceIntent.putExtra("PERMISSION", permissionToPedometro)
-            serviceIntent.putExtra("LAST_STEPS", LoginActivity.currentUserProfile?.pontuacao)
+            serviceIntent.putExtra("LAST_STEPS", LoginActivity.Companion.currentUserProfile?.pontuacao)
             bindService(serviceIntent, connection, BIND_AUTO_CREATE)
         } else {
             if (monitorService != null) {

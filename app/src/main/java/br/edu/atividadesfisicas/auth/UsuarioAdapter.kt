@@ -1,4 +1,4 @@
-package br.edu.atividadesfisicas
+package br.edu.atividadesfisicas.auth
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import br.edu.atividadesfisicas.R
 
 class UsuarioAdapter(
     private var listaFiltrada: List<PerfilUsuario>,

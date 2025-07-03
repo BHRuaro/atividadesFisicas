@@ -15,9 +15,9 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.core.widget.addTextChangedListener
-import br.edu.atividadesfisicas.PerfilUsuario
+import br.edu.atividadesfisicas.auth.PerfilUsuario
 import br.edu.atividadesfisicas.R
-import br.edu.atividadesfisicas.UsuarioAdapter
+import br.edu.atividadesfisicas.auth.UsuarioAdapter
 import br.edu.atividadesfisicas.conviteGrupo.ConviteGrupo
 import br.edu.atividadesfisicas.conviteGrupo.StatusConvite
 import com.google.firebase.Timestamp
@@ -81,7 +81,7 @@ class CriarGruposActivity : AppCompatActivity() {
                 if (!result.isEmpty) {
                     listaUsuarios.clear()
                     val usuarios = result.toObjects(PerfilUsuario::class.java)
-                        .filter { it.uid != currentUserUid } // Filtra o usuário atual
+                        .filter { it.uid != currentUserUid } 
                     listaUsuarios.addAll(usuarios)
                     lastVisible = result.documents[result.size() - 1]
                     adapter.notifyDataSetChanged()
@@ -107,7 +107,7 @@ class CriarGruposActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 if (!result.isEmpty) {
                     val novosUsuarios = result.toObjects(PerfilUsuario::class.java)
-                        .filter { it.uid != currentUserUid } // Filtra o usuário atual
+                        .filter { it.uid != currentUserUid } 
                     listaUsuarios.addAll(novosUsuarios)
                     adapter.notifyItemRangeInserted(
                         listaUsuarios.size - novosUsuarios.size,
@@ -139,7 +139,7 @@ class CriarGruposActivity : AppCompatActivity() {
         val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         
         val filtrados = listaUsuarios.filter {
-            it.uid != currentUserUid && // Sempre filtra o usuário atual
+            it.uid != currentUserUid && 
             (it.nome.contains(texto, ignoreCase = true) || it.email.contains(texto, ignoreCase = true))
         }
         adapter.atualizarLista(filtrados)
